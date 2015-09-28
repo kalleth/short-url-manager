@@ -26,8 +26,10 @@ class ShortUrlRequest
   scope :pending, -> { where(state: "pending") }
 
   def accept!
-    new_short_url = Redirect.new(from_path: from_path, to_path: to_path, short_url_request: self)
-    if new_short_url.save
+    new_short_url = Redirect.find_or_initialize_by(from_path: from_path)
+    result = new_short_url.update_attributes(to_path: to_path,
+                                             short_url_request: self)
+    if result
       update_attributes state: 'accepted'
       Notifier.short_url_request_accepted(self).deliver_now
       true

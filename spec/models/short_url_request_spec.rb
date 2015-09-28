@@ -76,18 +76,19 @@ describe ShortUrlRequest do
       let(:redirect_creation_successful?) { true }
       let(:new_short_url) {
         new_short_url = double
-        allow(new_short_url).to receive(:save).and_return(redirect_creation_successful?)
+        allow(new_short_url).to receive(:update_attributes).and_return(redirect_creation_successful?)
         new_short_url
       }
+
       before {
         stub_notification(:short_url_request_accepted)
-        allow(Redirect).to receive(:new).and_return(new_short_url)
+        allow(Redirect).to receive(:find_or_initialize_by).and_return(new_short_url)
       }
       let!(:return_value) { short_url_request.accept! }
 
-      it "should create a related Redirect, copying :to_path and :from_path attributes" do
-        expect(Redirect).to have_received(:new).with(hash_including(to_path: short_url_request.to_path, from_path: short_url_request.from_path))
-        expect(new_short_url).to have_received(:save)
+      it "should create/update a related Redirect, updating :to_path and keeping :from_path attributes" do
+        expect(Redirect).to have_received(:find_or_initialize_by).with(from_path: short_url_request.from_path)
+        expect(new_short_url).to have_received(:update_attributes).with(hash_including(to_path: short_url_request.to_path))
       end
 
       it "should return true, indicating that the state change was successful" do
@@ -101,6 +102,12 @@ describe ShortUrlRequest do
       it "should have sent a notification" do
         expect(Notifier).to have_received(:short_url_request_accepted).with(short_url_request)
         expect(stub_mail).to have_received(:deliver_now)
+      end
+
+      it "should update an existing redirect" do
+        expect(new_short_url).to have_received(:update_attributes)
+                                  .with(hash_including(to_path: short_url_request.to_path,
+                                                       short_url_request: short_url_request))
       end
 
       context "when the redirect can't be created for some reason" do
