@@ -11,8 +11,11 @@ class Redirect
 
   validates :from_path, :to_path, presence: true
   validates :from_path, :to_path, format: { with: /\A\//, message: 'must be specified as a relative path (eg. "/hmrc/tax-returns")' }, allow_blank: true
+  validates_uniqueness_of :from_path
 
   before_save :create_redirect_in_publishing_api
+
+  index({from_path: 1}, {unique: true})
 
 private
   def create_redirect_in_publishing_api
