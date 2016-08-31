@@ -1,0 +1,8 @@
+<%= form_for @short_url_request do |f| %>
+  <%= f.hidden_field :from_path %>
+  <%= f.hidden_field :to_path %>
+  <%= f.hidden_field :organisation_slug %>
+  <%= f.hidden_field :reason %>
+  <%= f.hidden_field :confirmed, value: true %>
+  <%= f.submit 'Yes, I still want to request this redirect' %>
+<% end %>
